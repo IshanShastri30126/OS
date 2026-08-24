@@ -1,0 +1,118 @@
+================================================================================
+  PRACTICAL 2: PROCESS CREATION, EXECUTION, AND SYNCHRONIZATION
+  (fork, exec, wait, waitpid)
+================================================================================
+
+1. OVERVIEW & OBJECTIVE
+--------------------------------------------------------------------------------
+This practical investigates Linux process creation, program replacement, and
+process synchronization using core POSIX system calls:
+- fork()   : Clones the calling process to create an exact child process.
+- exec()   : Replaces the current process image, code, and memory with a new binary.
+- wait()   : Suspends calling parent until any child process terminates.
+- waitpid(): Suspends parent until a specific child PID changes state.
+
+
+2. ESSENTIAL LINUX COMMANDS & PROCESS MONITORING TOOLS
+--------------------------------------------------------------------------------
+
+[COMMAND 1] pstree
+------------------
+Purpose:
+  Visualizes the process hierarchy as a tree starting from PID 1 (systemd/init).
+Common Flags:
+  pstree       : Shows running processes as a tree structure.
+  pstree -p    : Shows process IDs (PIDs) next to process names.
+  pstree -u    : Shows user transitions in the tree.
+  pstree -a    : Displays command line arguments for each process.
+Example:
+  $ pstree -p
+  systemd(1)───sshd(842)───bash(1245)───fork1(149782)───fork1(149783)
+
+[COMMAND 2] ps (Process Status)
+-------------------------------
+Purpose:
+  Lists active processes and their parent-child relationships (PPID).
+Common Flags:
+  ps -ef       : Standard full-format process listing showing UID, PID, PPID, C, STIME, TTY, TIME, CMD.
+  ps aux       : BSD format showing user, %CPU, %MEM, VSZ, RSS, STAT, and COMMAND.
+  ps -l        : Long format showing process state (STAT), priority (PRI), and nice value (NI).
+Example:
+  $ ps -ef | grep fork
+  student  149782  56401  0 23:47 pts/0    00:00:00 ./fork1
+  student  149783 149782  0 23:47 pts/0    00:00:00 ./fork1
+
+[COMMAND 3] top / htop
+----------------------
+Purpose:
+  Real-time dynamic view of active system processes and resource usage.
+Key Controls inside top:
+  q            : Quit.
+  k            : Kill a process by entering its PID.
+  M            : Sort by memory usage (%MEM).
+  P            : Sort by CPU utilization (%CPU).
+
+[COMMAND 4] cat /proc/<pid>/status
+----------------------------------
+Purpose:
+  Inspect detailed kernel metadata of a specific process ID.
+Example:
+  $ cat /proc/149782/status
+  Name:   fork1
+  State:  S (sleeping)
+  Tgid:   149782
+  Pid:    149782
+  PPid:   56401
+
+[COMMAND 5] strace
+------------------
+Purpose:
+  Intercepts and records all system calls invoked by a program during execution.
+Example:
+  $ strace ./fork1
+  (Traces clone/fork, write, wait4, exit_group calls)
+
+
+3. INCLUDED C SOURCE PROGRAMS IN THIS FOLDER
+--------------------------------------------------------------------------------
+1. fork1.c:
+   Demonstrates basic child process creation using fork(), printing PID and PPID,
+   and parent waiting for child completion using wait(NULL).
+
+2. p1.c:
+   A target standalone executable program that prints a greeting and its PID.
+
+3. example.c:
+   Demonstrates process image replacement using execv() to run `./p1` with arguments.
+
+4. ex.c:
+   Demonstrates running standard Linux system binaries (`/bin/ls` with `-l`) using execv().
+
+5. build_system.c:
+   Simulates a real-world multi-process build tool (like 'make') where multiple
+   compiler jobs run concurrently using fork() + execvp() and the parent synchronizes
+   all jobs using waitpid() before executing the final linking phase.
+
+
+4. COMPILATION & EXECUTION INSTRUCTIONS
+--------------------------------------------------------------------------------
+[Program 1: Basic Fork & Wait]
+  $ gcc fork1.c -o fork1
+  $ ./fork1
+
+[Program 2 & 3: Process Replacement with execv]
+  Step 1: Compile the target program:
+          $ gcc p1.c -o p1
+  Step 2: Compile the driver program:
+          $ gcc example.c -o example
+  Step 3: Run the driver:
+          $ ./example
+
+[Program 4: System Binary Execution via execv (ls -l)]
+  $ gcc ex.c -o ex
+  $ ./ex
+
+[Program 5: Build Automation Simulator]
+  $ gcc build_system.c -o build_system
+  $ ./build_system
+================================================================================

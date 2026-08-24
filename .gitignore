@@ -1,0 +1,38 @@
+# Compiled object files
+*.o
+*.out
+*.exe
+*.obj
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Executables
+practical1
+fork1
+p1
+example
+ex
+build_system
+zombie
+fcfs
+sjf
+priority
+round_robin
+fork_vs_thread
+thread1
+thread2
+thread3
+exp_3
+exp_1
+
+# Raw / Personal files
+*.docx
+*.pdf
+*.jpeg
+*.jpg
+*.png
+*.zip
+SendAnywhere*/
+

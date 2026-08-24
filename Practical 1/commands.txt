@@ -1,0 +1,110 @@
+================================================================================
+  PRACTICAL 1: LINUX SYSTEM CALLS & KERNEL INTERFACE EXPLORATION
+================================================================================
+
+1. OVERVIEW & OBJECTIVE
+--------------------------------------------------------------------------------
+This practical explores how Linux user-space applications interact with the
+Linux operating system kernel via system calls (syscalls) versus querying the
+virtual filesystem `/proc`.
+
+Key Concepts:
+- System Calls: Direct programmatic API exposed by the Linux kernel (POSIX standard).
+- /proc Filesystem: A pseudo/virtual filesystem providing an interface to kernel
+  data structures, process information, and hardware statistics.
+
+
+2. ESSENTIAL LINUX COMMANDS & EXPLANATIONS
+--------------------------------------------------------------------------------
+
+[COMMAND 1] uname
+-----------------
+Purpose:
+  Displays core information about the operating system kernel and hardware architecture.
+Common Flags:
+  uname        : Prints kernel name (e.g., Linux).
+  uname -r     : Prints kernel release version (e.g., 5.19.0-32-generic / 6.8.0-build).
+  uname -m     : Prints machine hardware architecture (e.g., x86_64, aarch64).
+  uname -n     : Prints network node hostname.
+  uname -a     : Prints all available system/kernel information in one line.
+Example:
+  $ uname -a
+  Linux studen 5.19.0-32-generic #33~22.04.1-Ubuntu SMP x86_64 GNU/Linux
+
+[COMMAND 2] free
+----------------
+Purpose:
+  Displays the total amount of free and used physical and swap memory in the system.
+Common Flags:
+  free         : Displays memory in Kilobytes (KB).
+  free -m      : Displays memory in Megabytes (MB).
+  free -g      : Displays memory in Gigabytes (GB).
+  free -h      : Displays memory in human-readable format (e.g., GiB, MiB).
+Example:
+  $ free -h
+                total        used        free      shared  buff/cache   available
+  Mem:          3.8Gi       911Mi       1.2Gi        44Mi       1.8Gi       2.7Gi
+  Swap:         2.1Gi          0B       2.1Gi
+
+[COMMAND 3] ps
+--------------
+Purpose:
+  Displays snapshots of currently running processes, process IDs (PIDs), and states.
+Common Flags:
+  ps           : Shows processes active in the current shell session.
+  ps -ef       : Shows full list of all running processes in the system.
+  ps aux       : BSD-style listing showing user, PID, %CPU, %MEM, VSZ, RSS, TTY, STAT, START, TIME, COMMAND.
+Example:
+  $ ps
+    PID TTY          TIME CMD
+  93117 pts/0    00:00:00 bash
+  93150 pts/0    00:00:00 ps
+
+[COMMAND 4] echo $$ & echo $PPID
+--------------------------------
+Purpose:
+  Displays the Process ID (PID) of the current shell ($$) and the Parent Process ID ($PPID).
+Example:
+  $ echo $$
+  56401
+  $ echo $PPID
+  1245
+
+[COMMAND 5] /proc VIRTUAL FILESYSTEM COMMANDS
+---------------------------------------------
+Purpose:
+  Directly inspects kernel and process runtime status in real time.
+
+  a) Process Status:
+     $ cat /proc/self/status
+     Displays name, state, PID, PPID, memory usage (VmPeak, VmSize, VmRSS), threads, and context switches.
+
+     $ cat /proc/$$/status
+     Displays status of current shell process.
+
+  b) Kernel & OS Version:
+     $ cat /proc/version
+     Displays Linux kernel version, GCC compiler version used to build it, and build timestamp.
+
+  c) System Memory Information:
+     $ cat /proc/meminfo
+     Provides detailed breakdown of RAM (MemTotal, MemFree, MemAvailable, Buffers, Cached, SwapTotal, SwapFree).
+
+
+3. COMPARISON: SYSTEM CALLS VS /proc FILESYSTEM VS SHELL COMMANDS
+--------------------------------------------------------------------------------
+Information   | C System Call         | /proc Virtual Entry | Shell Command
+--------------|-----------------------|---------------------|---------------
+Process ID    | getpid(), getppid()   | /proc/self/status   | echo $$, ps
+Kernel Info   | uname(&u)             | /proc/version       | uname -a
+Memory Info   | sysinfo(&s)           | /proc/meminfo       | free -h / free -m
+
+
+4. GCC COMPILATION & EXECUTION WORKFLOW
+--------------------------------------------------------------------------------
+Step 1: Open a terminal in the folder containing practical1.c.
+Step 2: Compile the C source code with GCC:
+        $ gcc practical1.c -o practical1
+Step 3: Execute the compiled binary:
+        $ ./practical1
+================================================================================

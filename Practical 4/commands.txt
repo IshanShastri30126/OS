@@ -1,0 +1,142 @@
+================================================================================
+  PRACTICAL 4: CPU SCHEDULING ALGORITHMS, PROCESS PRIORITIES & SCHEDULER DESIGN
+================================================================================
+
+1. OVERVIEW & OBJECTIVE
+--------------------------------------------------------------------------------
+This practical investigates CPU scheduling strategies, process execution states,
+process priorities, context switching, and scheduler behaviour under different workloads.
+
+Key Concepts:
+- Scheduling Algorithms: FCFS, SJF (Non-preemptive & SRTF), Priority, Round Robin (RR), Linux CFS.
+- Performance Metrics:
+    * Waiting Time (WT)    = Turnaround Time - Burst Time
+    * Turnaround Time (TAT)= Completion Time - Arrival Time
+    * Response Time (RT)   = Time from arrival to first CPU allocation
+    * Throughput           = Number of processes completed per unit time
+    * CPU Utilization      = % of time the CPU is actively executing processes
+- Process States in Linux:
+    * R (Running / Runnable)
+    * S (Interruptible Sleep)
+    * D (Uninterruptible Sleep / I/O wait)
+    * T (Stopped / Traced)
+    * Z (Zombie / Defunct)
+
+
+2. ESSENTIAL LINUX COMMANDS & SCHEDULING CONTROLS
+--------------------------------------------------------------------------------
+
+[COMMAND 1] ps with Custom Format & Sorting
+-------------------------------------------
+Purpose:
+  Inspects process scheduling priority, nice values, CPU usage, and states.
+Commands:
+  $ ps -eo pid,ni,pri,comm
+    Displays Process ID (PID), Nice value (NI: -20 to 19), Priority (PRI), and Command.
+  
+  $ ps -eo pid,cls,pri,cmd
+    Displays Scheduling Class (CLS e.g., TS=Time Sharing/CFS, FF=SCHED_FIFO, RR=SCHED_RR).
+  
+  $ ps aux --sort=-%cpu | head -n 10
+    Lists top 10 CPU-consuming processes in descending order.
+
+  $ ps -e -o pid,cmd,state | grep -E 'R|S|Z'
+    Filters processes by specific states (Running, Sleeping, Zombie).
+
+[COMMAND 2] nice & renice (Priority Management)
+-----------------------------------------------
+Purpose:
+  Controls the CPU scheduling priority of processes in Linux user space.
+  Nice values range from -20 (highest priority / least nice) to 19 (lowest priority / most nice).
+Commands:
+  Launch a new process with custom niceness:
+    $ nice -n 10 ./zombie
+    $ sudo nice -n -5 ./zombie   (Negative niceness requires root privileges)
+  
+  Alter the niceness of a currently running process:
+    $ renice +5 -p <PID>
+    $ sudo renice -10 -p <PID>
+
+[COMMAND 3] chrt (Real-Time Scheduling Attributes)
+--------------------------------------------------
+Purpose:
+  Views or sets real-time scheduling attributes (SCHED_OTHER, SCHED_FIFO, SCHED_RR, SCHED_BATCH).
+Commands:
+  Inspect scheduling policy and priority of a process:
+    $ chrt -p <PID>
+    Example Output:
+      pid 1764's current scheduling policy: SCHED_OTHER
+      pid 1764's current scheduling priority: 0
+
+[COMMAND 4] pidof, jobs, kill, pkill
+------------------------------------
+Purpose:
+  Process control and signal management.
+Commands:
+  $ pidof bash              : Finds PID of running bash shells.
+  $ jobs                    : Lists background/suspended jobs of current terminal.
+  $ kill <PID>              : Sends default SIGTERM (15) to terminate process gracefully.
+  $ kill -9 <PID>           : Sends SIGKILL (9) to force kill process immediately.
+  $ pkill <process_name>    : Kills processes by name (e.g., pkill gedit).
+
+[COMMAND 5] Context Switching & CPU Metrics via /proc
+-----------------------------------------------------
+Purpose:
+  Observes kernel statistics and context switch frequency.
+Commands:
+  $ cat /proc/$$/status | grep ctxt
+    voluntary_ctxt_switches:     196
+    nonvoluntary_ctxt_switches:  28
+  
+  $ cat /proc/stat
+    Displays aggregate CPU time spent in user, nice, system, idle, iowait, irq states.
+
+  $ cat /proc/<PID>/sched
+    Displays detailed Linux CFS scheduler statistics for the specified process.
+
+
+3. INCLUDED C SOURCE PROGRAMS IN THIS FOLDER
+--------------------------------------------------------------------------------
+1. zombie.c:
+   Creates a child process that exits immediately while the parent sleeps without
+   calling wait(), leaving the child in the Zombie (Z) defunct state.
+
+2. fcfs.c:
+   Implements First-Come First-Served CPU scheduling with arrival times, burst times,
+   calculates WT, TAT, RT, and prints the Gantt chart.
+
+3. sjf.c:
+   Implements Shortest Job First CPU scheduling in both Non-Preemptive and
+   Preemptive (Shortest Remaining Time First - SRTF) modes.
+
+4. priority.c:
+   Implements Priority-based CPU scheduling (both Non-Preemptive and Preemptive).
+
+5. round_robin.c:
+   Implements Round Robin CPU scheduling with configurable time quantum,
+   tracking response times, waiting times, and execution order.
+
+
+4. COMPILATION & EXECUTION INSTRUCTIONS
+--------------------------------------------------------------------------------
+[Zombie Process Demonstration]
+  $ gcc zombie.c -o zombie
+  $ ./zombie &
+  $ ps aux | grep -i 'Z'
+
+[FCFS Scheduling Simulator]
+  $ gcc fcfs.c -o fcfs
+  $ ./fcfs
+
+[SJF Scheduling Simulator]
+  $ gcc sjf.c -o sjf
+  $ ./sjf
+
+[Priority Scheduling Simulator]
+  $ gcc priority.c -o priority
+  $ ./priority
+
+[Round Robin Scheduling Simulator]
+  $ gcc round_robin.c -o round_robin
+  $ ./round_robin
+================================================================================

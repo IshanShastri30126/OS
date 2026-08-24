@@ -1,0 +1,131 @@
+================================================================================
+  PRACTICAL 5: POSIX THREAD PROGRAMMING & CONTEXT SWITCHING ANALYSIS
+================================================================================
+
+1. OVERVIEW & OBJECTIVE
+--------------------------------------------------------------------------------
+This practical investigates multithreaded programming in Linux using POSIX Threads
+(Pthreads). It compares the characteristics of heavyweight processes versus
+lightweight threads (LWPs), exploring memory sharing, scalability, and execution
+overhead.
+
+Key POSIX Thread APIs:
+- pthread_create(&tid, attr, start_routine, arg) : Creates a new thread.
+- pthread_join(tid, &retval)                     : Suspends caller until thread terminates.
+- pthread_exit(retval)                           : Terminates the calling thread.
+
+
+2. ESSENTIAL LINUX COMMANDS & THREAD MONITORING TOOLS
+--------------------------------------------------------------------------------
+
+[COMMAND 1] ps -eLf & ps -T -p <PID>
+------------------------------------
+Purpose:
+  Displays threads (Lightweight Processes / LWPs) running in the operating system.
+Columns Explained:
+  UID     : User ID owning the process.
+  PID     : Process ID (shared by all threads in that process).
+  PPID    : Parent Process ID.
+  LWP     : Lightweight Process ID (Thread ID assigned by Linux kernel).
+  NLWP    : Number of Lightweight Processes (threads) in this process.
+Examples:
+  $ ps -eLf | grep thread
+  $ ps -T -p <PID>
+
+[COMMAND 2] top -H / htop
+-------------------------
+Purpose:
+  Displays a real-time monitor where individual threads are shown as separate rows.
+Flags:
+  top -H       : Activates Thread Mode in top (shows per-thread CPU utilization).
+  htop         : Press 'F2' -> Display options -> Show custom thread names/colors.
+
+[COMMAND 3] /proc Virtual Filesystem Inspection for Threads
+-----------------------------------------------------------
+Purpose:
+  Queries kernel directories for process and thread metadata.
+Commands:
+  $ ls /proc/<PID>/task/
+    Lists subdirectories for every thread (TID) belonging to process <PID>.
+
+  $ cat /proc/<PID>/status | grep Threads
+    Threads: 5
+
+  $ cat /proc/<PID>/task/<TID>/stat
+    Displays per-thread CPU consumption, scheduling policy, and stack information.
+
+[COMMAND 4] time
+----------------
+Purpose:
+  Measures real (wall-clock), user CPU time, and sys (kernel) time spent by a program.
+Example:
+  $ time ./exp_1
+  real    0m1.004s
+  user    0m0.002s
+  sys     0m0.003s
+
+
+3. KEY COMPARISON: PROCESSES (fork) VS THREADS (pthread)
+--------------------------------------------------------------------------------
+Feature               | Processes (fork)                 | Threads (pthread_create)
+----------------------|----------------------------------|--------------------------
+Memory Space          | Isolated (Separate Address Space)| Shared (Same Data/Heap)
+Creation Overhead     | High (Copies page tables)        | Low (Shares memory map)
+Context Switching     | Heavy (Requires TLB flush)       | Light (Shares MMU/address)
+Communication         | Requires IPC (Pipes, SHM, Sockets)| Direct via shared variables
+Crash Vulnerability   | One process crash won't kill others| Crash may terminate whole process
+
+
+4. INCLUDED C SOURCE PROGRAMS IN THIS FOLDER
+--------------------------------------------------------------------------------
+1. fork_vs_thread.c (fork.c):
+   Demonstrates process memory isolation: child alters variable `x`, but parent's `x`
+   remains unchanged.
+
+2. thread1.c:
+   Demonstrates shared memory in threads: worker thread modifies global `x = 20`,
+   and the main thread directly reads the updated value.
+
+3. thread2.c:
+   Runs 2 concurrent threads with interleaved sleep/work routines, demonstrating
+   asynchronous thread scheduling.
+
+4. thread3.c:
+   Demonstrates dynamic thread creation and joining using loops with an array of
+   thread handles `pthread_t tid[3]`.
+
+5. exp_3.c (Thread Scaling):
+   Benchmarks dynamic scaling with user-selected thread counts (2, 4, 8, 16 threads).
+
+6. exp_1.c (Performance Comparison):
+   Compares execution time of sequential execution versus multithreaded concurrent execution.
+
+
+5. COMPILATION & EXECUTION INSTRUCTIONS
+--------------------------------------------------------------------------------
+Note: Always link with the POSIX threads library using `-lpthread` or `-pthread`.
+
+[Program 1: Fork Isolation]
+  $ gcc fork_vs_thread.c -o fork_vs_thread
+  $ ./fork_vs_thread
+
+[Program 2: Shared Memory with Thread]
+  $ gcc thread1.c -o thread1 -lpthread
+  $ ./thread1
+
+[Program 3: Concurrent Threads]
+  $ gcc thread2.c -o thread2 -lpthread
+  $ ./thread2
+
+[Program 4: Array of Threads]
+  $ gcc thread3.c -o thread3 -lpthread
+  $ ./thread3
+
+[Program 5: Thread Scaling Benchmark]
+  $ gcc exp_3.c -o exp_3 -lpthread
+  $ ./exp_3
+
+[Program 6: Sequential vs Multithreaded Benchmark]
+  $ gcc exp_1.c -o exp_1 -lpthread
+  $ ./exp_1
+================================================================================
